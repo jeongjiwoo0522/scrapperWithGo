@@ -5,6 +5,10 @@ import (
 	"github/jeongjiwoo0522/scrapperWithGo/something"
 )
 
+func multiply(a int, b int) int {
+	return a * b
+}
+
 func main() {
 	fmt.Println("Hello World")
 	something.SayHello()
@@ -19,4 +23,6 @@ func main() {
 	short := "hello"
 	fmt.Println(name, id, address, height, weight, short)
 	// variables and constants
+
+	fmt.Println(multiply(2, 3))
 }
