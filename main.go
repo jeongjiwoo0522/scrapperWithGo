@@ -1,7 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"github/jeongjiwoo0522/scrapperWithGo/something"
+)
 
 func main() {
-	fmt.Println("Hello World")
+	something.SayHello()
 }
