@@ -2,19 +2,19 @@ package main
 
 import (
 	"fmt"
-	"github/jeongjiwoo0522/scrapperWithGo/account"
+	"github/jeongjiwoo0522/scrapperWithGo/dict"
 )
 
 func main() {
-	account := account.NewAccount("nico")
-	fmt.Println(*account)
-	account.Deposit(10)
-	fmt.Println(account.Balance())
-	err := account.Withdraw(12)
+	dictionary := dict.Dictionary{}
+	word := "hello"
+	dictionary.Add(word, "First")
+	dictionary.Update(word, "Second")
+	dictionary.Delete(word)
+	definition, err := dictionary.Search(word)
 	if err != nil {
 		fmt.Println(err)
+	} else {
+		fmt.Println(definition)
 	}
-	account.ChangeOwner("jiwoo")
-	fmt.Println(account.Balance(), account.Owner())
-	fmt.Println(account)
 }
