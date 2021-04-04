@@ -1,50 +1,41 @@
 package main
 
 import (
-	"errors"
 	"fmt"
+	"github/PuerkitoBio/goquery"
+	"log"
 	"net/http"
 )
 
-type requestResult struct {
-	url string
-	status string
-}
-
-var errRequestFailed error = errors.New("Request Failed")
+var baseURL string = "https://kr.indeed.com/jobs?q=python&limit=50"
 
 func main() {
-	results := make(map[string]string)
-	urls := []string{
-		"https://github.com/",
-		"https://nomadcoders.co/",
-		"https://www.google.com/",
-		"https://www.naver.com/",
-		"https://www.facebook.com/",
-		"https://www.instagram.com/",
-		"https://www.amazon.com/",
-	}
+	getPages()
+}
 
-	c := make(chan requestResult)
-	for _, url := range urls {
-		go hitUrl(url, c)
-	}
+func getPages() int {
+	res, err := http.Get(baseURL)
+	checkErr(err)
+	checkCode(res)
 
-	for i:=0; i<len(urls); i++ {
-		result := <-c
-		results[result.url] = result.status
-	}
+	defer res.Body.Close()
 
-	for url, status := range results {
-		fmt.Println(url, status)
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	checkErr(err)
+
+	fmt.Println(doc)
+
+	return 0
+}
+
+func checkErr(err error) {
+	if err != nil {
+		log.Fatalln(err)
 	}
 }
 
-func hitUrl(url string, c chan<- requestResult) {
-	resp, err := http.Get(url)
-	status := "OK"
-	if err != nil || resp.StatusCode >= 400 {
-		status = "FAILED"
+func checkCode(res *http.Response) {
+	if res.StatusCode != 200 {
+		log.Fatalln("Reqeust failed with Status: ", res.StatusCode)
 	}
-	c <- requestResult{url: url, status: status}
 }
