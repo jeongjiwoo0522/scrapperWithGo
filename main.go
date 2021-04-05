@@ -23,10 +23,15 @@ var baseURL string = "https://kr.indeed.com/jobs?q=python&limit=50"
 
 func main() {
 	var jobs []extractedJob
+	c := make(chan []extractedJob)
 	totalPages := getPages()
 
 	for i:=0; i<totalPages; i++ {
-		extractedJobs := getPage(i)
+		go getPage(i, c)
+	}
+
+	for i:=0; i<totalPages; i++ {
+		extractedJobs := <-c
 		jobs = append(jobs, extractedJobs...)
 	}
 
@@ -35,6 +40,7 @@ func main() {
 }
 
 func writeJobs(jobs []extractedJob) {
+	c := make(chan bool)
 	file, err := os.Create("jobs.csv")
 	checkErr(err)
 
@@ -47,14 +53,24 @@ func writeJobs(jobs []extractedJob) {
 	checkErr(wErr)
 
 	for _, job := range jobs {
-		jobSlice := []string{job.id, job.title, job.location, job.salary, job.summary}
-		jwErr := w.Write(jobSlice)
-		checkErr(jwErr)
+		go writeToFile(job, w, c)
+	}
+
+	for i:=0; i<len(jobs); i++ {
+		fmt.Println("Write File ", <-c)
 	}
 }
 
-func getPage(page int) []extractedJob {
+func writeToFile(job extractedJob, w *csv.Writer, c chan<- bool) {
+	jobSlice := []string{job.id, job.title, job.location, job.salary, job.summary}
+	jwErr := w.Write(jobSlice)
+	checkErr(jwErr)
+	c <- true
+}
+
+func getPage(page int, mainC chan<- []extractedJob) {
 	var jobs []extractedJob
+	c := make(chan extractedJob)
 	pageURL := baseURL + "&start=" + strconv.Itoa(page * 50)
 	fmt.Println("Requesting", pageURL)
 	res, err := http.Get(pageURL)
@@ -69,20 +85,24 @@ func getPage(page int) []extractedJob {
 	searchCards := doc.Find(".jobsearch-SerpJobCard")
 
 	searchCards.Each(func (i int, card *goquery.Selection) {
-		job := extractJob(card)
-		jobs = append(jobs, job)
+		go extractJob(card, c)
 	})
 
-	return jobs
+	for i:=0; i<searchCards.Length(); i++ {
+		job := <-c
+		jobs = append(jobs, job)
+	}
+
+	mainC <- jobs
 }
 
-func extractJob(card *goquery.Selection) extractedJob {
+func extractJob(card *goquery.Selection, c chan<- extractedJob) {
 	id, _ := card.Attr("data-jk")
 	title := cleanString(card.Find(".title>a").Text())
 	location := cleanString(card.Find((".sjcl")).Text())
 	salary := cleanString(card.Find("salaryText").Text())
 	summary := cleanString(card.Find(".summary").Text())
-	return extractedJob{id: id, title: title, location: location, salary: salary, summary: summary}
+	c <- extractedJob{id: id, title: title, location: location, salary: salary, summary: summary}
 }
 
 func getPages() int {
