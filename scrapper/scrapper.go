@@ -3,7 +3,7 @@ package scrapper
 import (
 	"encoding/csv"
 	"fmt"
-	"github/PuerkitoBio/goquery"
+	"github.com/PuerkitoBio/goquery"
 	"log"
 	"net/http"
 	"os"

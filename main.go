@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github/labstack/echo"
+	"github.com/labstack/echo"
 	"net/http"
 )
 
